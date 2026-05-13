@@ -1,0 +1,43 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: qaapp-postgres
+    environment:
+      POSTGRES_DB: qaapp
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin#123
+    ports:
+      - "5432:5342"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    container_name: qaapp-backend
+    ports:
+      - "8080:8080"
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      DB_URL: jdbc:postgresql://postgres:5432/qaapp
+      DB_USER: postgres
+      DB_PASSWORD: admin#123
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  uploads:
+
+
+
